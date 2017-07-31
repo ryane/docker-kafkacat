@@ -1,17 +1,17 @@
-FROM debian:latest
+FROM debian:stable-20170620
 
-WORKDIR /build
-
-ENV BUILD_PACKAGES "build-essential git curl zlib1g-dev python"
-RUN apt-get update -y && \
-    apt-get install $BUILD_PACKAGES -y && \
-    git clone https://github.com/edenhill/kafkacat.git && \
-    cd kafkacat && \
-    ./bootstrap.sh && \
-    make install && \
-    cd .. && rm -rf kafkacat && \
-    AUTO_ADDED_PACKAGES=`apt-mark showauto` && \
-    apt-get remove --purge -y $BUILD_PACKAGES $AUTO_ADDED_PACKAGES && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN buildDeps='curl ca-certificates build-essential zlib1g-dev python cmake'; \
+  set -ex; \
+  apt-get update && apt-get install -y $buildDeps --no-install-recommends; \
+  rm -rf /var/lib/apt/lists/*; \
+  \
+  mkdir /usr/src/kafkacat; \
+  curl -SLs "https://github.com/edenhill/kafkacat/archive/master.tar.gz" | tar -xzf - --strip-components=1 -C /usr/src/kafkacat; \
+  cd /usr/src/kafkacat; \
+  ./bootstrap.sh; \
+  mv ./kafkacat /usr/local/bin/; \
+  \
+  rm -rf /usr/src/kafkacat/tmp-bootstrap; \
+  apt-get purge -y --auto-remove $buildDeps
 
 ENTRYPOINT ["kafkacat"]
